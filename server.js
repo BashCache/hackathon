@@ -7,10 +7,9 @@ const router = express.Router();
 const path = require('path')
 const expressValidator = require('express-validator');
 const userRoutes = require("./routes/user");
+var exphbs  = require('express-handlebars');
 var server = http.createServer(app);
-
-// const router = require('./models/routes');
-// const checkAuth  = require('./middleware/check-auth');
+const ejs = require('ejs')
 
 app.use(express.json());
 app.use(
@@ -20,10 +19,12 @@ app.use(
 );
 app.use(cors());
 app.use(express.static(path.join(__dirname,'./frontend')));
+app.set('view engine', 'ejs');
+
 app.use(expressValidator());
 
-app.post('/add', (req,res) => {
-    console.log('hi in add');
+app.get('/', (req,res) => {
+    res.render('index2')
 })
 app.use("/user", userRoutes);
 

@@ -56,7 +56,7 @@ exports.sendMailAcquaintanceForRegistration = (req, res, next) => {
 			// 	id: req.id,
 			// 	token: req.token
 			// });
-			res.status(200).render('http://192.168.0.8:8080/login.html', {success: '' });
+			res.status(200).render('../views/homepage');
 		}
 	});
 };

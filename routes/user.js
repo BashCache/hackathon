@@ -11,5 +11,6 @@ const router = express.Router();
 // Validator.userSigninValidator
 router.post("/register", Validator.userRegisterValidator, User.register, Mailer.sendMailForRegistration, Mailer.sendMailAcquaintanceForRegistration);
 router.post("/signin", Validator.userSigninValidator, User.signin);
+router.post("/sentimentanalysis", User.sentimentanalyis);
 
 module.exports = router;
