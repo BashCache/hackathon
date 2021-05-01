@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MYCOMPANION</title>
     <!-- css -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../views/style.css">
     <!-- bootstrap links -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- fontAweosum -->
@@ -27,7 +27,7 @@
         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">
             <i class="fa fa-plus"></i> SIGN UP
         </button><br>
-        <a class="btn btn-secondary btn-sm" href="login.html">
+        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleLoginModal">
             <i class="fas fa-sign-in-alt"></i> LOGIN
         </a>
     </div><br>
@@ -69,6 +69,34 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="exampleLoginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">LOGIN</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  <form autocomplete="off" class="form-group" id="signup-form" action = "http://localhost:3000/user/signin"  method="POST">
+                      <label for="">Email</label>
+                      <input type="email" class="form-control" id="email" name="email" required><br>
+                      <label for="">Password</label>
+                      <input type="password" class="form-control" id="password" name="password" required minlength="6"><br>
+                      <input type="submit" class="btn btn-primary" value="SIGN IN"></button> 
+                  </form>
+              </div>
+              <div class="container error" id="signupError"></div>
+              <div class="container error" id="signupError2"></div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
     </script>

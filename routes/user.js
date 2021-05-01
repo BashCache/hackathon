@@ -9,8 +9,10 @@ const router = express.Router();
 // require("../config/passport.js")(passport);
 // Validator.userRegisterValidator
 // Validator.userSigninValidator
+// console.log(localStorage.getItem('myFirstKey'));
 router.post("/register", Validator.userRegisterValidator, User.register, Mailer.sendMailForRegistration, Mailer.sendMailAcquaintanceForRegistration);
 router.post("/signin", Validator.userSigninValidator, User.signin);
+router.post("/scrapeData", User.scrapeData);
 router.post("/sentimentanalysis", User.sentimentanalyis);
 
 module.exports = router;

@@ -51,12 +51,14 @@ exports.sendMailAcquaintanceForRegistration = (req, res, next) => {
             throw err;
 			console.log("Mail not sent");
 		} else {
-			// res.status(200).send({
+			// res.status(200, {message: "hi"}).send({
 			// 	message: "User registered and mail sent to acquaintance",
 			// 	id: req.id,
 			// 	token: req.token
 			// });
-			res.status(200).render('success-reg.pug', {message: 'User registered and mail sent to acquaintance', id: req.body.id, token: req.token});
+			res.render('../views/homepage', {message: "hi"});
+			// return res.redirect('http://localhost:8080/homepage.html')
+			// res.status(200).render('success-reg.pug', {message: 'User registered and mail sent to acquaintance', id: req.body.id, token: req.token});
 		}
 	});
 };

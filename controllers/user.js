@@ -1,4 +1,5 @@
 const User = require("../models").user;
+const Report = require("../models").report;
 const crypto = require("crypto");
 const { uuid } = require("uuidv4");
 const QuickEncrypt = require("quick-encrypt");
@@ -7,12 +8,19 @@ const natural = require('natural')
 const aposToLexForm = require('apos-to-lex-form');
 const SpellCorrector = require('spelling-corrector');
 const SW = require('stopword');
+const rp = require('request-promise');
+const $ = require('cheerio');
+const { WordTokenizer } = natural;
+const { SentimentAnalyzer, PorterStemmer } = natural;
+const jwt_decode = require('jwt-decode');
+const LocalStorage = require('node-localstorage').LocalStorage
 
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 const spellCorrector = new SpellCorrector();
 spellCorrector.loadDictionary();
+
 
 // const publicKey = fs.readFileSync(
 // 	__dirname + process.env.PUBLIC_KEY_DIR,
@@ -82,9 +90,14 @@ exports.signin = (req, res) => {
 					.digest("hex");
 				if (new_hashed_pwd === User.hashed_password) {
 					const token = jwt.sign({ id: User.id }, process.env.JWT_ENCRYPTION);
-					res
-						.status(200)
-						.render('success-reg.pug', {title: 'success', message: "User Signed in", id: User.id, token: token })
+				// if (typeof localStorage === "undefined" || localStorage === null) {
+				// 		console.log('hi in local storage')
+				localStorage = new LocalStorage('./scratch');
+					//  }
+				localStorage.setItem('Key', token);
+				res
+					.status(200)
+					.render('../views/homepage', { title: 'success', message: "User Signed in", id: User.id, token: token })
 				} else {
 					res.status(401).render('error.pug' , { title: 'error-login', message: "Wrong credentials" });
 				}
@@ -93,33 +106,194 @@ exports.signin = (req, res) => {
 			}
 		})
 		.catch((err) => {
-			// throw err;
+			throw err;
 			res.status(401).render('error.pug', {title: 'error-login', message: 'Server error'} );
 		});
 };
 
 exports.sentimentanalyis = (req, res) => {
-	const review  = req.body.review;
-	const lexedReview = aposToLexForm(review);
-	const casedReview = lexedReview.toLowerCase();
-	const alphaOnlyReview = casedReview.replace(/[^a-zA-Z\s]+/g, '');
+	if (typeof localStorage === "undefined" || localStorage === null) {
+				// 		console.log('hi in local storage')
+				localStorage = new LocalStorage('./scratch');
+					 }
+	token = localStorage.getItem('Key');
+	const decoded = jwt_decode(token);
+	console.log(decoded)
+	const user_id = decoded.id;
+	console.log(decoded.id);
+	var datetime = new Date();
+    console.log(datetime);
 
-	const { WordTokenizer } = natural;
-  	const tokenizer = new WordTokenizer();
-  	const tokenizedReview = tokenizer.tokenize(alphaOnlyReview);
+	User.findOne({ where: { id: decoded.id} })
+		.then((User) => {
+			if(User)	{
+				Report.create({
+					user_id: decoded.id,
+                    name: 'HELLO',
+					date:  datetime,
+					score: 0
+				})
+				.then((Report) => {
+						console.log('success');
+						const review  = req.body.review;
+						console.log('here', typeof(req.body))
+						const review_keys = Object.keys(req.body);
+						console.log(review_keys)
+						let i = 0;
+						let score = 0;
+						if(review_keys[1] == 'great')	score += 5;
+						else if(review_keys[1] == 'mediocre') score += 0;
+						else if(review_keys[1] == 'bad')	score -=5;
 
-	tokenizedReview.forEach((word, index) => {
-		tokenizedReview[index] = spellCorrector.correct(word);
-	});
+						if(review_keys[2] == 'friends')	score += 5;
+						else if(review_keys[2] == 'friendsno') score -= 5;
 
-	const filteredReview = SW.removeStopwords(tokenizedReview);
+						if(review_keys[3] == 'sleep')	score += 10;
+						else if(review_keys[3] == 'sleepno') score -= 10;
 
-	const { SentimentAnalyzer, PorterStemmer } = natural;
-	const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
-  	const analysis = analyzer.getSentiment(filteredReview);
+						if(review_keys[4] == 'relax')	score += 5;
+						else if(review_keys[4] == 'relaxno') score -= 5;
 
-  res.status(200).json({ analysis });
+						if(review_keys[5] == 'motivate')	score += 15;
+						else if(review_keys[5] == 'motivateno') score -= 5;
+
+						if(review_keys[6] == 'notatall')	score += 15;
+						else if(review_keys[6] == 'slight') score -= 5;
+						else if(review_keys[6] == 'verystressed') score -= 15;
+
+						if(review_keys[7] == 'self')	score -= 25;
+						else if(review_keys[7] == 'selfmay') score -= 10;
+						else if(review_keys[7] == 'selfno') score += 15;
+
+						score += 5*req.body.points;
+						const thoughts = req.body.thoughts;
+						const talks = req.body.talk;
+
+						const lexedthoughts = aposToLexForm(thoughts);
+						const lexedtalks = aposToLexForm(talks);
+
+						const casedthoughts = lexedthoughts.toLowerCase();
+						const casedtalks = lexedtalks.toLowerCase();
+
+						const alphaOnlyThoughts = casedthoughts.replace(/[^a-zA-Z\s]+/g, '');
+						const alphaOnlyTalks = casedtalks.replace(/[^a-zA-Z\s]+/g, '');
+
+						const tokenizer = new WordTokenizer();
+						const tokenizedThoughts= tokenizer.tokenize(alphaOnlyThoughts);
+						const tokenizedTalks= tokenizer.tokenize(alphaOnlyTalks);
+
+						tokenizedThoughts.forEach((word, index) => {
+							tokenizedThoughts[index] = spellCorrector.correct(word);
+						});
+						tokenizedTalks.forEach((word, index) => {
+							tokenizedTalks[index] = spellCorrector.correct(word);
+						});
+
+						const filteredthoughts = SW.removeStopwords(tokenizedThoughts);
+						const filteredtalks = SW.removeStopwords(tokenizedTalks);
+
+						const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
+						const thoughts_analysis = analyzer.getSentiment(filteredthoughts);
+						const talk_analysis = analyzer.getSentiment(filteredtalks);
+
+						console.log(thoughts_analysis, talk_analysis, score);
+						res.status(200).send({ thoughts_analysis: thoughts_analysis, talk_analysis: talk_analysis})
+							// next(); //sending mail
+						})
+				.catch((err) => {
+					throw err;
+					res.status(400).render('error.pug', { message: "Server error" });
+					});
+			}
+			else {
+				res.status(401).send({ message: 'User not found' });
+			}
+		})
+		.catch((err) => {
+			throw err;
+		});
+	
+// 	const review  = req.body.review;
+// 	console.log('here', typeof(req.body))
+// 	const review_keys = Object.keys(req.body);
+// 	console.log(review_keys)
+// 	let i = 0;
+// 	let score = 0;
+// 	if(review_keys[1] == 'great')	score += 5;
+// 	else if(review_keys[1] == 'mediocre') score += 0;
+// 	else if(review_keys[1] == 'bad')	score -=5;
+
+// 	if(review_keys[2] == 'friends')	score += 5;
+// 	else if(review_keys[2] == 'friendsno') score -= 5;
+
+// 	if(review_keys[3] == 'sleep')	score += 10;
+// 	else if(review_keys[3] == 'sleepno') score -= 10;
+
+// 	if(review_keys[4] == 'relax')	score += 5;
+// 	else if(review_keys[4] == 'relaxno') score -= 5;
+
+// 	if(review_keys[5] == 'motivate')	score += 15;
+// 	else if(review_keys[5] == 'motivateno') score -= 5;
+
+// 	if(review_keys[6] == 'notatall')	score += 15;
+// 	else if(review_keys[6] == 'slight') score -= 5;
+// 	else if(review_keys[6] == 'verystressed') score -= 15;
+
+// 	if(review_keys[7] == 'self')	score -= 25;
+// 	else if(review_keys[7] == 'selfmay') score -= 10;
+// 	else if(review_keys[7] == 'selfno') score += 15;
+
+// 	score += 5*req.body.points;
+// 	const thoughts = req.body.thoughts;
+// 	const talks = req.body.talk;
+
+// 	const lexedthoughts = aposToLexForm(thoughts);
+// 	const lexedtalks = aposToLexForm(talks);
+
+// 	const casedthoughts = lexedthoughts.toLowerCase();
+// 	const casedtalks = lexedtalks.toLowerCase();
+
+// 	const alphaOnlyThoughts = casedthoughts.replace(/[^a-zA-Z\s]+/g, '');
+// 	const alphaOnlyTalks = casedtalks.replace(/[^a-zA-Z\s]+/g, '');
+
+//   	const tokenizer = new WordTokenizer();
+//   	const tokenizedThoughts= tokenizer.tokenize(alphaOnlyThoughts);
+// 	const tokenizedTalks= tokenizer.tokenize(alphaOnlyTalks);
+
+// 	tokenizedThoughts.forEach((word, index) => {
+// 		tokenizedThoughts[index] = spellCorrector.correct(word);
+// 	});
+// 	tokenizedTalks.forEach((word, index) => {
+// 		tokenizedTalks[index] = spellCorrector.correct(word);
+// 	});
+
+// 	const filteredthoughts = SW.removeStopwords(tokenizedThoughts);
+// 	const filteredtalks = SW.removeStopwords(tokenizedTalks);
+
+// 	const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
+//   	const thoughts_analysis = analyzer.getSentiment(filteredthoughts);
+// 	const talk_analysis = analyzer.getSentiment(filteredtalks);
+
+// 	console.log(thoughts_analysis, talk_analysis, score);
+
+//   res.status(200).json({ thoughts_analysis, talk_analysis });
 };
+
+exports.scrapeData = (req, res) => {
+	const url = 'https://www.practo.com/' + req.body.location + '/psychiatrist?sort_by=patient_experience_score';
+	console.log(url);
+	rp(url)
+      .then(function(html) {
+		console.log('here');
+		// console.log($('.info-section .a'))
+		console.log($('.info-section .doctor-name', html).text());
+
+  	})
+  .catch(function(err) {
+    //handle error
+  });
+	res.status(200).send({ message: "hi"});
+}
 // exports.forgotPasswordGenerateLink = (req, res, next) => {
 // 	User.findOne({ where: { email: req.body.email } })
 // 		.then((current_user) => {

@@ -2,9 +2,249 @@
 <html lang="en">
 
 <head>
-    <title> MY COMPANION</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYCOMPANION</title>
+    <!-- css -->
+    <link rel="stylesheet" href="../views/style.css">
+    <link rel="stylesheet" href="../views/survey.css">
+    <!-- bootstrap links -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- fontAweosum -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <!-- googleFonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Tangerine|Lato|Gamja+Flower|Open+Sans|Roboto+Slab|Indie+Flower|Lobster|Open+Sans|Kosugi+Maru">
 </head>
 
-<body>
-    <% message %>
+<body onload="loadbody()">
+    <!-- date and time section -->
+    <div class="my-container">
+        <h3>Welcome!</h3><br>
+        <button type="button" class="btn btn-primary btn-sm"  style=width:20% data-toggle="modal" data-target="#exampleModal">
+            <i class="fa fa-plus"></i>QUICK ASSESSMENT
+        </button><br>
+        <a class="btn btn-secondary btn-sm" href="login.html">
+            <i class="fas fa-sign-in-alt"></i>THERAPISTS HELP
+        </a>
+    </div><br>
+    <!-- todo-form -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">QUICK SURVEY</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="form" method="POST" action="http://localhost:3000/user/sentimentanalysis">
+
+                        <!-- Details -->
+                
+                        <div class="form-control">
+                            <label>How old are you?</label>
+                            <input type="number" id="age" name="age" min="10" max="100" placeholder="Enter your age">
+                        </div>
+                      
+                        <div class="form-control">
+                            <label>
+                                Your Overall mood this week has been?
+                            </label>
+                
+                            <!-- Input Type Radio Button -->
+                            <label for="great">
+                                <input type="radio"
+                                    id="great"
+                                    name="great">Great</input>
+                            </label>
+                            <label for="mediocre">
+                                <input type="radio"
+                                    id="mediocre"
+                                    name="mediocre">Mediocre</input>
+                            </label>
+                            <label for="bad">
+                                <input type="radio"
+                                    id="bad"
+                                    name="bad">Bad</input>
+                            </label>
+                        </div>
+                        <div class="form-control">
+                            <label>
+                                Have you spoken with your friends this week?
+                            </label>
+                
+                            <!-- Input Type Radio Button -->
+                            <label for="friends">
+                                <input type="radio"
+                                    id="friends"
+                                    name="friends">Yes</input>
+                            </label>
+                            <label for="friendsno">
+                                <input type="radio"
+                                    id="friendsno"
+                                    name="friendsno">No</input>
+                            </label>
+                            </div>
+                            <div class="form-control">
+                                <label>
+                                    Did you sleep  7-8 hours most of this week?
+                                </label>
+                    
+                                <!-- Input Type Radio Button -->
+                                <label for="sleep">
+                                    <input type="radio"
+                                        id="sleep"
+                                        name="sleep">Yes</input>
+                                </label>
+                                <label for="sleepno">
+                                    <input type="radio"
+                                        id="sleepno"
+                                        name="sleepno">No</input>
+                                </label>
+                                </div>
+                                <div class="form-control">
+                                    <label>
+                                       Have you spent time for yourself this week(Relaxation)?
+                                    </label>
+                        
+                                    <!-- Input Type Radio Button -->
+                                    <label for="relax">
+                                        <input type="radio"
+                                            id="relax"
+                                            name="relax">Yes</input>
+                                    </label>
+                                    <label for="relaxno">
+                                        <input type="radio"
+                                            id="relaxno"
+                                            name="relaxno">No</input>
+                                    </label>
+                                    </div>
+                                    <div class="form-control">
+                                    <label>
+                                        Have you been feeling demotivated lately?
+                                    </label>
+                        
+                                    <!-- Input Type Radio Button -->
+                                    <label for="motivate">
+                                        <input type="radio"
+                                            id="motivate"
+                                            name="motivate">Yes</input>
+                                    </label>
+                                    <label for="motivateno">
+                                        <input type="radio"
+                                            id="motivateno"
+                                            name="motivateno">No</input>
+                                    </label>
+                                    </div>
+                                    <div class="form-control">
+                                    <label>
+                                       How stressed do you feel?
+                                    </label>
+                        
+                                    <!-- Input Type Radio Button -->
+                                    <label for="notatall">
+                                        <input type="radio"
+                                            id="notatall"
+                                            name="notatall">Not at all</input>
+                                    </label>
+                                    <label for="slight">
+                                        <input type="radio"
+                                            id="slight"
+                                            name="slight">Slightly</input>
+                                    </label>
+                                    <label for="verystressed">
+                                        <input type="radio"
+                                            id="verystressed"
+                                            name="verystressed">Very stressed</input>
+                                    </label>
+                                    </div>
+                                    <div class="form-control">
+                                        <label>
+                                            Have you thought about any sort of self-harm in the past week?
+                                        </label>
+                            
+                                        <!-- Input Type Radio Button -->
+                                        <label for="self">
+                                            <input type="radio"
+                                                id="self"
+                                                name="self">Yes</input>
+                                        </label>
+                                        <label for="selfmay">
+                                            <input type="radio"
+                                                id="selfmay"
+                                                name="selfmay">Maybe</input>
+                                        </label>
+                                        <label for="selfno">
+                                            <input type="radio"
+                                                id="selfno"
+                                                name="selfno">No</input>
+                                        </label>
+                                        </div>
+                                        <div class="form-control">
+                                            <label for="rate" id="rate">
+                                                Rate your happiness 
+                                            </label>
+                                            <input type="range" id="age" name="points" min="1" max="5" placeholder="Rate here">
+                                            <!-- Dropdown options -->
+                                            <!--<select name="rate" id="rate">
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                            </select>
+                                        -->
+                                        </div>
+                
+                       
+                        <div class="form-control">
+                            <label for="thoughts">
+                              Why did you feel the need to take this survey today?
+                            </label>
+                
+                            <!-- multi-line text input control -->
+                            <textarea name="thoughts" id="thoughts"
+                                placeholder="Enter your thoughts here">
+                            </textarea>
+                        </div>
+                        <div class="form-control">
+                            <label for="talk">
+                             Talk to us!Tell how are you feeling right now.
+                            </label>
+                
+                            <!-- multi-line text input control -->
+                            <textarea name="talk" id="talk">
+                            </textarea>
+                        </div>
+                
+                        <!-- Multi-line Text Input Control -->
+                        <button type="submit" value="submit">
+                            Submit
+                        </button>
+                    </form>
+                </div>
+                <div class="container error" id="signupError"></div>
+                <div class="container error" id="signupError2"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+    </script>
+
+  
+    <script src='app.js'></script>
+
 </body>
+
+</html>
