@@ -56,7 +56,7 @@ exports.sendMailAcquaintanceForRegistration = (req, res, next) => {
 			// 	id: req.id,
 			// 	token: req.token
 			// });
-			res.status(200).render('../views/homepage');
+			res.status(200).render('success-reg.pug', {message: 'User registered and mail sent to acquaintance', id: req.body.id, token: req.token});
 		}
 	});
 };

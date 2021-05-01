@@ -56,11 +56,11 @@ exports.register = (req, res, next) => {
 							// req.id = User.id;
 							next(); //sending mail
 						} else {
-							res.status(400).send({ message: "Server error" });
+							res.status(400).render('error.pug', { message: "Server error" });
 						}
 					})
 					.catch((err) => {
-						res.status(400).send({ message: "Server error" });
+						res.status(400).render('error.pug', { message: "Server error" });
 					});
 			} else {
 				res.status(401).send({ message: "User already exists" });
@@ -84,16 +84,17 @@ exports.signin = (req, res) => {
 					const token = jwt.sign({ id: User.id }, process.env.JWT_ENCRYPTION);
 					res
 						.status(200)
-						.send({ message: "User Signed in", id: User.id, token: token });
+						.render('success-reg.pug', {title: 'success', message: "User Signed in", id: User.id, token: token })
 				} else {
-					res.status(401).send({ message: "Wrong credentials" });
+					res.status(401).render('error.pug' , { title: 'error-login', message: "Wrong credentials" });
 				}
 			} else {
-				res.status(401).send( {message: 'User not found'} );
+				res.status(401).render('error.pug', {title: 'error-login', message: 'User not found'} );
 			}
 		})
 		.catch((err) => {
-			res.status(400).send({ message: "Server error" });
+			// throw err;
+			res.status(401).render('error.pug', {title: 'error-login', message: 'Server error'} );
 		});
 };
 
