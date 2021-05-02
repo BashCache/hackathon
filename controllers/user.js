@@ -1,5 +1,6 @@
 const User = require("../models").user;
 const Report = require("../models").report;
+const Song = require("../models").song;
 const crypto = require("crypto");
 const { uuid } = require("uuidv4");
 const QuickEncrypt = require("quick-encrypt");
@@ -97,7 +98,7 @@ exports.signin = (req, res) => {
 				localStorage.setItem('Key', token);
 				res
 					.status(200)
-					.render('../views/homepage', { title: 'success', message: "User Signed in", id: User.id, token: token })
+					.render('../views/homepage1', { title: 'success', message: "User Signed in", id: User.id, token: token })
 				} else {
 					res.status(401).render('error.pug' , { title: 'error-login', message: "Wrong credentials" });
 				}
@@ -111,7 +112,7 @@ exports.signin = (req, res) => {
 		});
 };
 
-exports.sentimentanalyis = (req, res) => {
+exports.sentimentanalyis = (req, res, next) => {
 	if (typeof localStorage === "undefined" || localStorage === null) {
 				// 		console.log('hi in local storage')
 				localStorage = new LocalStorage('./scratch');
@@ -124,6 +125,73 @@ exports.sentimentanalyis = (req, res) => {
 	var datetime = new Date();
     console.log(datetime);
 
+	const review  = req.body.review;
+	console.log('here', typeof(req.body))
+	const review_keys = Object.keys(req.body);
+	console.log(review_keys)
+	let i = 0;
+	let tot_score = 0;
+	tot_score = parseInt(tot_score)
+	if(review_keys[1] == 'great')	tot_score += parseInt(10);
+	else if(review_keys[1] == 'mediocre') tot_score += parseInt(7);
+	else if(review_keys[1] == 'bad')	tot_score += parseInt(3);
+
+	if(review_keys[2] == 'friends')	tot_score += parseInt(5);
+	else if(review_keys[2] == 'friendsno') tot_score += parseInt(2);
+
+	if(review_keys[3] == 'sleep')	tot_score += parseInt(10);
+	else if(review_keys[3] == 'sleepno') tot_score += parseInt(4);
+
+	if(review_keys[4] == 'relax')	tot_score += parseInt(5);
+	else if(review_keys[4] == 'relaxno') tot_score += parseInt(2);
+
+	if(review_keys[5] == 'motivate')	tot_score += parseInt(10);
+	else if(review_keys[5] == 'motivateno') tot_score += parseInt(5);
+
+	if(review_keys[6] == 'notatall')	tot_score += parseInt(10);
+	else if(review_keys[6] == 'slight') tot_score += parseInt(6);
+	else if(review_keys[6] == 'verystressed') tot_score += parseInt(3);
+
+	if(review_keys[7] == 'self')	tot_score += parseInt(3);
+	else if(review_keys[7] == 'selfmay') tot_score += parseInt(7);
+	else if(review_keys[7] == 'selfno') tot_score += parseInt(15);
+
+	tot_score += parseInt(req.body.points);
+
+	const thoughts = req.body.thoughts;
+	const talks = req.body.talk;
+
+	const lexedthoughts = aposToLexForm(thoughts);
+	const lexedtalks = aposToLexForm(talks);
+
+	const casedthoughts = lexedthoughts.toLowerCase();
+	const casedtalks = lexedtalks.toLowerCase();
+
+	const alphaOnlyThoughts = casedthoughts.replace(/[^a-zA-Z\s]+/g, '');
+	const alphaOnlyTalks = casedtalks.replace(/[^a-zA-Z\s]+/g, '');
+
+	const tokenizer = new WordTokenizer();
+	const tokenizedThoughts= tokenizer.tokenize(alphaOnlyThoughts);
+	const tokenizedTalks= tokenizer.tokenize(alphaOnlyTalks);
+
+	tokenizedThoughts.forEach((word, index) => {
+		tokenizedThoughts[index] = spellCorrector.correct(word);
+	});
+	tokenizedTalks.forEach((word, index) => {
+		tokenizedTalks[index] = spellCorrector.correct(word);
+	});
+
+	const filteredthoughts = SW.removeStopwords(tokenizedThoughts);
+	const filteredtalks = SW.removeStopwords(tokenizedTalks);
+
+	const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
+	const thoughts_analysis = analyzer.getSentiment(filteredthoughts);
+	const talk_analysis = analyzer.getSentiment(filteredtalks);
+
+	
+	tot_score = tot_score + parseInt(thoughts_analysis)*3 + parseInt(talk_analysis*3)
+	console.log(thoughts_analysis, talk_analysis, tot_score, typeof(tot_score), tot_score);
+
 	User.findOne({ where: { id: decoded.id} })
 		.then((User) => {
 			if(User)	{
@@ -131,75 +199,19 @@ exports.sentimentanalyis = (req, res) => {
 					user_id: decoded.id,
                     name: 'HELLO',
 					date:  datetime,
-					score: 0
+					score: tot_score,
 				})
 				.then((Report) => {
 						console.log('success');
-						const review  = req.body.review;
-						console.log('here', typeof(req.body))
-						const review_keys = Object.keys(req.body);
-						console.log(review_keys)
-						let i = 0;
-						let score = 0;
-						if(review_keys[1] == 'great')	score += 5;
-						else if(review_keys[1] == 'mediocre') score += 0;
-						else if(review_keys[1] == 'bad')	score -=5;
-
-						if(review_keys[2] == 'friends')	score += 5;
-						else if(review_keys[2] == 'friendsno') score -= 5;
-
-						if(review_keys[3] == 'sleep')	score += 10;
-						else if(review_keys[3] == 'sleepno') score -= 10;
-
-						if(review_keys[4] == 'relax')	score += 5;
-						else if(review_keys[4] == 'relaxno') score -= 5;
-
-						if(review_keys[5] == 'motivate')	score += 15;
-						else if(review_keys[5] == 'motivateno') score -= 5;
-
-						if(review_keys[6] == 'notatall')	score += 15;
-						else if(review_keys[6] == 'slight') score -= 5;
-						else if(review_keys[6] == 'verystressed') score -= 15;
-
-						if(review_keys[7] == 'self')	score -= 25;
-						else if(review_keys[7] == 'selfmay') score -= 10;
-						else if(review_keys[7] == 'selfno') score += 15;
-
-						score += 5*req.body.points;
-						const thoughts = req.body.thoughts;
-						const talks = req.body.talk;
-
-						const lexedthoughts = aposToLexForm(thoughts);
-						const lexedtalks = aposToLexForm(talks);
-
-						const casedthoughts = lexedthoughts.toLowerCase();
-						const casedtalks = lexedtalks.toLowerCase();
-
-						const alphaOnlyThoughts = casedthoughts.replace(/[^a-zA-Z\s]+/g, '');
-						const alphaOnlyTalks = casedtalks.replace(/[^a-zA-Z\s]+/g, '');
-
-						const tokenizer = new WordTokenizer();
-						const tokenizedThoughts= tokenizer.tokenize(alphaOnlyThoughts);
-						const tokenizedTalks= tokenizer.tokenize(alphaOnlyTalks);
-
-						tokenizedThoughts.forEach((word, index) => {
-							tokenizedThoughts[index] = spellCorrector.correct(word);
-						});
-						tokenizedTalks.forEach((word, index) => {
-							tokenizedTalks[index] = spellCorrector.correct(word);
-						});
-
-						const filteredthoughts = SW.removeStopwords(tokenizedThoughts);
-						const filteredtalks = SW.removeStopwords(tokenizedTalks);
-
-						const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
-						const thoughts_analysis = analyzer.getSentiment(filteredthoughts);
-						const talk_analysis = analyzer.getSentiment(filteredtalks);
-
-						console.log(thoughts_analysis, talk_analysis, score);
-						res.status(200).send({ thoughts_analysis: thoughts_analysis, talk_analysis: talk_analysis})
-							// next(); //sending mail
-						})
+						req.body.id= decoded.id; req.body.mood= review_keys[1]; req.body.friends= review_keys[2];
+						req.body.sleep= review_keys[3]; req.body.relax= review_keys[4]; req.body.motivate= review_keys[5];
+						req.body.stress= review_keys[6]; req.body.selfharm= review_keys[7]; req.body.happiness= review_keys[8];
+						req.body.thoughts= thoughts; req.body.talk= talks;
+						req.body.thoughts_analysis= thoughts_analysis; req.body.talk_analysis= talk_analysis;
+						req.body.score = tot_score; req.body.email = User.email; req.body.acq_email = User.acq_email;
+						console.log('going to send mails')
+						next(); //sending mail
+				})
 				.catch((err) => {
 					throw err;
 					res.status(400).render('error.pug', { message: "Server error" });
@@ -213,203 +225,109 @@ exports.sentimentanalyis = (req, res) => {
 			throw err;
 		});
 	
-// 	const review  = req.body.review;
-// 	console.log('here', typeof(req.body))
-// 	const review_keys = Object.keys(req.body);
-// 	console.log(review_keys)
-// 	let i = 0;
-// 	let score = 0;
-// 	if(review_keys[1] == 'great')	score += 5;
-// 	else if(review_keys[1] == 'mediocre') score += 0;
-// 	else if(review_keys[1] == 'bad')	score -=5;
-
-// 	if(review_keys[2] == 'friends')	score += 5;
-// 	else if(review_keys[2] == 'friendsno') score -= 5;
-
-// 	if(review_keys[3] == 'sleep')	score += 10;
-// 	else if(review_keys[3] == 'sleepno') score -= 10;
-
-// 	if(review_keys[4] == 'relax')	score += 5;
-// 	else if(review_keys[4] == 'relaxno') score -= 5;
-
-// 	if(review_keys[5] == 'motivate')	score += 15;
-// 	else if(review_keys[5] == 'motivateno') score -= 5;
-
-// 	if(review_keys[6] == 'notatall')	score += 15;
-// 	else if(review_keys[6] == 'slight') score -= 5;
-// 	else if(review_keys[6] == 'verystressed') score -= 15;
-
-// 	if(review_keys[7] == 'self')	score -= 25;
-// 	else if(review_keys[7] == 'selfmay') score -= 10;
-// 	else if(review_keys[7] == 'selfno') score += 15;
-
-// 	score += 5*req.body.points;
-// 	const thoughts = req.body.thoughts;
-// 	const talks = req.body.talk;
-
-// 	const lexedthoughts = aposToLexForm(thoughts);
-// 	const lexedtalks = aposToLexForm(talks);
-
-// 	const casedthoughts = lexedthoughts.toLowerCase();
-// 	const casedtalks = lexedtalks.toLowerCase();
-
-// 	const alphaOnlyThoughts = casedthoughts.replace(/[^a-zA-Z\s]+/g, '');
-// 	const alphaOnlyTalks = casedtalks.replace(/[^a-zA-Z\s]+/g, '');
-
-//   	const tokenizer = new WordTokenizer();
-//   	const tokenizedThoughts= tokenizer.tokenize(alphaOnlyThoughts);
-// 	const tokenizedTalks= tokenizer.tokenize(alphaOnlyTalks);
-
-// 	tokenizedThoughts.forEach((word, index) => {
-// 		tokenizedThoughts[index] = spellCorrector.correct(word);
-// 	});
-// 	tokenizedTalks.forEach((word, index) => {
-// 		tokenizedTalks[index] = spellCorrector.correct(word);
-// 	});
-
-// 	const filteredthoughts = SW.removeStopwords(tokenizedThoughts);
-// 	const filteredtalks = SW.removeStopwords(tokenizedTalks);
-
-// 	const analyzer = new SentimentAnalyzer('English', PorterStemmer, 'afinn');
-//   	const thoughts_analysis = analyzer.getSentiment(filteredthoughts);
-// 	const talk_analysis = analyzer.getSentiment(filteredtalks);
-
-// 	console.log(thoughts_analysis, talk_analysis, score);
-
-//   res.status(200).json({ thoughts_analysis, talk_analysis });
 };
 
 exports.scrapeData = (req, res) => {
-	const url = 'https://www.practo.com/' + req.body.location + '/psychiatrist?sort_by=patient_experience_score';
+	const loc = req.body.location.toLowerCase();
+	const url = 'https://www.practo.com/' + loc + '/psychiatrist?sort_by=patient_experience_score';
 	console.log(url);
 	rp(url)
       .then(function(html) {
 		console.log('here');
-		// console.log($('.info-section .a'))
-		console.log($('.info-section .doctor-name', html).text());
+		const doc_name = $('.info-section .doctor-name', html).first().text()
+		const doc_qual = $('.info-section .u-d-inline', html).first().text()
+		const doc_exp = $('.info-section .uv2-spacer--xs-top', html).first().text()
+		const doc_fee = $('.info-section .uv2-spacer--sm-top .uv2-spacer--xs-top span', html).first().text()
+		const doc_url = 'https://www.practo.com' + $('.info-section a', html).attr('href')
+		console.log(doc_name, doc_qual, doc_exp, doc_fee, doc_url)
+		// console.log(data1, typeof(data1));
+		var docName = [];
+		var docQual = [];
+		var docExp = [];
+		var docFee = [];
+		var docURL = [];
 
+	$('.info-section .doctor-name', html).each(function (i, elem) {
+		// console.log($(this).text())
+		docName.push($(this).text())
+    });
+	$('.info-section .u-d-inline', html).each(function (i, elem) {
+		// console.log($(this).text())
+		docQual.push($(this).text())
+    });
+	$('.info-section .uv2-spacer--xs-top', html).each(function (i, elem) {
+		// console.log($(this).text())
+		docExp.push($(this).text())
+    });
+	res.status(200).render('../views/scrape1.pug', {title: 'scrape data', DoctorName: doc_name, DoctorQual: doc_qual, Exp: doc_exp, Fee: doc_fee, url: doc_url })
   	})
   .catch(function(err) {
     //handle error
+	throw err;
   });
-	res.status(200).send({ message: "hi"});
+	// res.status(200).send({ message: "hi"});
 }
-// exports.forgotPasswordGenerateLink = (req, res, next) => {
-// 	User.findOne({ where: { email: req.body.email } })
-// 		.then((current_user) => {
-// 			if (current_user) {
-// 				if (current_user.password === null) {
-// 					//google signed in user - reset password is not possible
-// 					res
-// 						.status(401)
-// 						.send({ message: "Incorrect Email Id or Email Id doesnot exists" });
-// 				} else {
-// 					//generating link to send a mail.
-// 					new_salt = uuid();
-// 					const link =
-// 						environment[process.env.NODE_ENV].url +
-// 						"/user/forgotPasswordGetLink?u=" +
-// 						QuickEncrypt.encrypt(current_user.email, publicKey) +
-// 						"&id=" +
-// 						QuickEncrypt.encrypt(new_salt, publicKey);
 
-// 					current_user
-// 						.update({
-// 							forgotPasswordSalt: new_salt // to check during password reset
-// 						})
-// 						.then(() => {
-// 							req.link = link;
-// 							setTimeout(() => {
-// 								current_user.update({ forgotPasswordSalt: null }).then(() => {
-// 									console.log("Link expired");
-// 								});
-// 							}, 2 * 60 * 1000); //Time in milli-seconds
+exports.recommendMusic = (req, res) => {
+	if (typeof localStorage === "undefined" || localStorage === null) {
+		// 		console.log('hi in local storage')
+		localStorage = new LocalStorage('./scratch');
+			 }
+	token = localStorage.getItem('Key');
+	const decoded = jwt_decode(token);
+	console.log(decoded)
+	const user_id = decoded.id;
+	console.log(decoded.id);
+	const SongLink = []
 
-// 							next(); //Sending Mail
-// 						});
-// 				}
-// 			} else {
-// 				res
-// 					.status(401)
-// 					.send({ message: "Incorrect Email Id/Email Id doesnot exists" });
-// 			}
-// 		})
-// 		.catch((err) => {
-// 			res.status(400).send({ message: "Server error" });
-// 		});
-// };
-
-// exports.forgotPasswordGetLink = (req, res, next) => {
-// 	try {
-// 		const email = QuickEncrypt.decrypt(req.query.u, privateKey);
-// 		User.findOne({
-// 			where: { email: email }
-// 		})
-// 			.then((User) => {
-// 				if (User) {
-// 					if (
-// 						QuickEncrypt.decrypt(req.query.id, privateKey) ===
-// 						User.forgotPasswordSalt
-// 					) {
-// 						const link =
-// 							environment[process.env.NODE_ENV].url + "/user/resetPassword";
-
-// 						//This response only for dev purpose..
-// 						res.send(
-// 							"<html><body><form action =" +
-// 								link +
-// 								" method=\"POST\"><input type='text' name = 'password'/><input type='hidden' name = 'id' value = " +
-// 								req.query.id +
-// 								"></input><input type='hidden' name = 'email' value = " +
-// 								req.query.u +
-// 								"></input><input type = 'submit'/></form></body></html>"
-// 						);
-// 					} else {
-// 						res.status(401).send({ message: "Bad request" });
-// 					}
-// 				} else {
-// 					res.status(401).send({ message: "User not found" });
-// 				}
-// 			})
-// 			.catch((err) => {
-// 				res.status(400).send({ message: "Link expired" });
-// 			});
-// 	} catch {
-// 		res.status(401).send({ message: "Invalid Link" });
-// 	}
-// };
-
-// exports.resetPassword = (req, res, next) => {
-// 	try {
-// 		const email = QuickEncrypt.decrypt(req.body.email, privateKey);
-// 		const forgotPasswordSalt = QuickEncrypt.decrypt(req.body.id, privateKey);
-// 		User.findOne({ where: { email: email } })
-// 			.then((User) => {
-// 				if (User) {
-// 					if (forgotPasswordSalt === User.forgotPasswordSalt) {
-// 						new_salt = uuid();
-// 						new_hashed_password = crypto
-// 							.createHash(process.env.hash_algo, new_salt)
-// 							.update(req.body.password)
-// 							.digest("hex");
-// 						User.update({
-// 							forgotPasswordSalt: null, //link is active for one time updation only
-// 							hashed_password: new_hashed_password,
-// 							salt: new_salt
-// 						}).then(() => {
-// 							res.status(200).send({ message: "Password updated" });
-// 						});
-// 					} else {
-// 						res.status(401).send({ message: "Bad Request" });
-// 					}
-// 				} else {
-// 					res.status(401).send({ message: "User not found" });
-// 				}
-// 			})
-// 			.catch((err) => {
-// 				res.status(400).send({ message: "Server error" });
-// 			});
-// 	} catch {
-// 		res.status(401).send({ message: "Restricted Access" });
-// 	}
-// };
+	Report.findOne({ where: { user_id: decoded.id },
+		order: [ [ 'date', 'desc' ] ]
+	  })
+	  .then((Report) => {
+		    if(Report.score < 45) {
+				Song.findAll({ where: {genre: 'Happy'}
+				})
+				.then((Song) => {
+					console.log('hi from songs')
+					let i = 0;
+					// for(i = 0; i < 3; i++) {
+					// 	console.log(Song[i].dataValues.link);
+					// 	SongLink.push(Song[i].dataValues.link);
+					// }
+					res.status(200).render('../views/musicrecommender.pug', { title: 'music' , song1: Song[0].dataValues.link, song2: Song[1].dataValues.link, song3: Song[2].dataValues.link});	
+				})
+				.catch((err) => {
+					throw err;
+				})
+			}
+			else if(Report.score < 60) {
+				Song.findAll({ where: {genre: 'Pop'}
+				})
+				.then((Song) => {
+					console.log('hi from songs')
+					res.status(200).render('../views/musicrecommender.pug', { title: 'music' , song1: Song[0].dataValues.link, song2: Song[1].dataValues.link, song3: Song[2].dataValues.link});		
+				})
+				.catch((err) => {
+					throw err;
+				})
+			}
+			else {
+				{
+					Song.findAll({ where: {genre: 'HipHop'}
+					})
+					.then((Song) => {
+						console.log('hi from songs')
+						res.status(200).render('../views/musicrecommender.pug', { title: 'music' , song1: Song[0].dataValues.link, song2: Song[1].dataValues.link, song3: Song[2].dataValues.link});	
+					})
+					.catch((err) => {
+						throw err;
+					})
+				}
+			}
+			console.log(Report.user_id, Report.score);
+			// res.status(200).render('../views/musicrecommender.pug', { title: 'music' , song1: Song[0].dataValues.link, song2: Song[1].dataValues.link, song3: Song[2].dataValues.link});	
+	  })
+	  .catch((err) => {
+		  throw err;
+	  })
+}

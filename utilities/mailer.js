@@ -62,3 +62,32 @@ exports.sendMailAcquaintanceForRegistration = (req, res, next) => {
 		}
 	});
 };
+
+exports.sendMailReport = (req, res) => {
+	mailList = []
+	mailList.push(req.body.email) 
+	if(req.body.score < 40)	mailList.push(req.body.acq_email) 
+	console.log('here', mailList)
+	const message = {
+		to: mailList,
+		// cc: "*******" ,
+		subject: "Report generated for the survey",
+		html:
+			"<p> Greetings. Here is the score for the survey that you took is " + req.body.score + "</p>" +
+			"<p> You decided to take the survey because: " + req.body.thoughts + "</p>" + 
+			"<p> Your feelings right now is: " + req.body.talk + "</p>"
+			// req.kid
+	};
+
+	transport.sendMail(message, (err, info) => {
+		if (err) {
+			// Add logic to resend mails
+            throw err;
+			console.log("Mail not sent");
+		} else {
+			console.log('here');
+			res.status(200).render('../views/score.pug', { score: req.body.score });
+            // next();
+		}
+	});
+};

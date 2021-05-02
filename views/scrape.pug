@@ -1,0 +1,19 @@
+
+head
+  title THERAPISTS
+  link(rel='stylesheet' href='../views/style.css')
+  script(type='text/javascript').
+   
+.my-container
+  h2 Hi!Here is a therapist we found for you!
+  br
+  br
+  .date-time
+    list
+      li= DoctorName
+      li= DoctorQual
+      li= Exp
+      li= Fee
+      a(href= url) For Further details, click the link
+      //- li#weekday Clinic Name
+  br

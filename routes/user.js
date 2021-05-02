@@ -6,13 +6,11 @@ const Validator = require("../validators/auth");
 // const Auth = require("../controllers/auth");
 
 const router = express.Router();
-// require("../config/passport.js")(passport);
-// Validator.userRegisterValidator
-// Validator.userSigninValidator
-// console.log(localStorage.getItem('myFirstKey'));
+
 router.post("/register", Validator.userRegisterValidator, User.register, Mailer.sendMailForRegistration, Mailer.sendMailAcquaintanceForRegistration);
 router.post("/signin", Validator.userSigninValidator, User.signin);
-router.post("/scrapeData", User.scrapeData);
-router.post("/sentimentanalysis", User.sentimentanalyis);
+router.post("/seekHelp", User.scrapeData);
+router.post("/sentimentanalysis", User.sentimentanalyis, Mailer.sendMailReport);
+router.post("/recommendMusic", User.recommendMusic);
 
 module.exports = router;
